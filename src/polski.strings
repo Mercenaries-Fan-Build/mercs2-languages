@@ -1,0 +1,10 @@
+# polski.strings — placeholder translation for the `add_language` contribution.
+#
+# One edit per line, `[Key.Name] = text` or `0xHASH = text`, same format as `edit_stringdb`.
+# The workshop's Localization page is the real author of this file (fork English, translate,
+# export). These few lines exist so the Shipment is self-contained once `add_language` lands.
+
+[Menu.NewGame]  = NOWA GRA
+[Menu.Continue] = KONTYNUUJ
+[Menu.Options]  = OPCJE
+[Menu.Quit]     = WYJŚCIE

@@ -1,0 +1,12 @@
+# qm output — reproducible from the manifest + src/.
+build/
+
+# plugin build intermediates
+plugin/*.o
+
+# The built plugin (src/mercs2_language.asi) IS a shipment input and is committed at release
+# time; uncomment to keep it out of source control during development instead:
+# src/mercs2_language.asi
+
+.DS_Store
+Thumbs.db

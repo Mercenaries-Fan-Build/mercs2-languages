@@ -1,0 +1,56 @@
+# mercs2-language — add a novel, selectable language to Mercenaries 2.
+#
+# Three halves, one Shipment:
+#   1. native_hook  — the selector plugin (forces the language index at mount time)
+#   2. place_file   — the plugin's config, beside the module
+#   3. add_language — the novel language's base WAD (stringdb + fonts)   ← see NOTE
+#
+# NOTE: `add_language` is a NEW manifest kind, not yet in qm. The game builds the mounted
+# filename AND the stringdb key from the same language-name string, and a missing base
+# `.\Data\<name>.wad` is a hard exit(1) — so a *novel* language needs a new base WAD placed
+# in data/, which no existing kind can do (`place_file`'s dest set excludes data/; overlays
+# only build `<base>-patch.wad`). Implementing that kind in mercs2_quartermaster is the
+# companion task. Until it lands, the `add_language` contribution below will not lint.
+#
+# RE + hook contract: notes-on-the-released-game/docs/reverse_engineer/language_asi_hook_contract.md
+
+format: 1
+
+shipment:
+  name: mercs2-language
+  version: 0.1.0
+  target: retail
+  authors: [mercs2-fan-build]
+  description: Adds a novel, player-selectable language via a native language-selector plugin and a new language WAD.
+  license: MIT
+
+contributions:
+  # 1 — the selector plugin. At the language-WAD mount (FUN_004bfe20) it forces
+  #     *DAT_01176018 to the configured slot, so the game boots into our language
+  #     independent of OS-locale. Built against the m2 SDK (see plugin/).
+  - kind: native_hook
+    target: retail
+    plugin: src/mercs2_language.asi
+    # EXCLUSIVE on the address — no other plugin may hook the language-WAD mount.
+    touches: ["0x004BFE20"]
+
+  # 2 — the plugin's config, written beside the loaded module.
+  - kind: place_file
+    file: src/mercs2_language.ini
+    dest: scripts
+
+  # 3 — the novel language's base WAD. REQUIRES the new `add_language` kind (see NOTE).
+  #     `name` is the slot string the plugin selects and the basename the game opens
+  #     (`.\Data\polski.wad`). The workshop's Localization page authors `strings`.
+  - kind: add_language
+    name: polski
+    display: Polski
+    strings: src/polski.strings
+    # fonts: src/polski_fonts/   # only if glyphs fall outside fonts_enext (Cyrillic/CJK)
+
+# The shared SDK layer is a load-time dependency shipped beside the .asi — pinned, not vendored.
+load:
+  requires:
+    - name: m2-sdk
+      url: https://github.com/Mercenaries-Fan-Build/mercs2-sdk/releases/download/v0.0.0/m2-sdk.dll
+      sha256: "0000000000000000000000000000000000000000000000000000000000000000"
