@@ -3,14 +3,13 @@
 # Three halves, one Shipment:
 #   1. native_hook  — the selector plugin (forces the language index at mount time)
 #   2. place_file   — the plugin's config, beside the module
-#   3. add_language — the novel language's base WAD (stringdb + fonts)   ← see NOTE
+#   3. add_language — the novel language's base WAD (stringdb + fonts)   ← see WHY
 #
-# NOTE: `add_language` is a NEW manifest kind, not yet in qm. The game builds the mounted
-# filename AND the stringdb key from the same language-name string, and a missing base
-# `.\Data\<name>.wad` is a hard exit(1) — so a *novel* language needs a new base WAD placed
-# in data/, which no existing kind can do (`place_file`'s dest set excludes data/; overlays
-# only build `<base>-patch.wad`). Implementing that kind in mercs2_quartermaster is the
-# companion task. Until it lands, the `add_language` contribution below will not lint.
+# WHY add_language and not place_file: the game builds the mounted filename AND the stringdb key
+# from the same language-name string, and a missing base `.\Data\<name>.wad` is a hard exit(1) —
+# so a *novel* language needs a new base WAD placed in data/, which no other kind can do
+# (`place_file`'s dest set excludes data/; overlays only build `<base>-patch.wad`). The
+# `add_language` kind in mercs2_quartermaster does exactly that; this contribution lints clean.
 #
 # RE + hook contract: notes-on-the-released-game/docs/reverse_engineer/language_asi_hook_contract.md
 
