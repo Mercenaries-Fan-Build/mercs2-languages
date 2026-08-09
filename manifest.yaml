@@ -48,9 +48,12 @@ contributions:
     strings: src/polski.strings
     # fonts: src/polski_fonts/   # only if glyphs fall outside fonts_enext (Cyrillic/CJK)
 
-# The shared SDK layer is a load-time dependency shipped beside the .asi — pinned, not vendored.
+# The shared SDK layer is a load-time dependency, resolved by SEMVER RANGE — not a byte-exact pin.
+# Modkit installs the highest m2-sdk release satisfying this range (currently v0.1.0), ONE copy
+# shared across every mod that needs it, so the SDK can patch on its own cadence without this
+# shipment being re-released. It lands in the GAME ROOT (not scripts/) because pmc_bb loads .asi
+# plugins with a plain LoadLibraryA, which resolves a plugin's own imports from the exe directory.
 load:
   requires:
     - name: m2-sdk
-      url: https://github.com/Mercenaries-Fan-Build/mercs2-sdk/releases/download/v0.0.0/m2-sdk.dll
-      sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+      version: "^0.1"
