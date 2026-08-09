@@ -1,10 +1,22 @@
-# polski.strings — placeholder translation for the `add_language` contribution.
+# polski.strings — Polish translation for the `add_language` contribution.
 #
-# One edit per line, `[Key.Name] = text` or `0xHASH = text`, same format as `edit_stringdb`.
-# The workshop's Localization page is the real author of this file (fork English, translate,
-# export). These few lines exist so the Shipment is self-contained once `add_language` lands.
-
-[Menu.NewGame]  = NOWA GRA
-[Menu.Continue] = KONTYNUUJ
-[Menu.Options]  = OPCJE
-[Menu.Quit]     = WYJŚCIE
+# The engine stores string KEYS as hashes (it hashes the bracket name), so a made-up
+# `[Menu.NewGame]` reverses to a hash the table never had. These are REAL keys from the
+# shipped `english` table (via `stringdb_dump` over vz.wad), edited by hash. The workshop's
+# Localization page is the real author of this file; these lines prove the pipeline.
+#
+# hash          english          polish
+# 0x32E96B39    NEW GAME     ->  NOWA GRA
+0x32E96B39 = NOWA GRA
+# 0x1324DF48    CONTINUE     ->  KONTYNUUJ
+0x1324DF48 = KONTYNUUJ
+# 0x385F518F    OPTIONS      ->  OPCJE
+0x385F518F = OPCJE
+# 0x22C16B8E    Quit         ->  Wyjdz
+0x22C16B8E = Wyjdz
+# 0x2D95AA31    YES          ->  TAK
+0x2D95AA31 = TAK
+# 0x174404D2    NO           ->  NIE
+0x174404D2 = NIE
+# 0x18562935    Back         ->  Wstecz
+0x18562935 = Wstecz
