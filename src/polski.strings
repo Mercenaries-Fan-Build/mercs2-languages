@@ -20,3 +20,51 @@
 0x174404D2 = NIE
 # 0x18562935    Back         ->  Wstecz
 0x18562935 = Wstecz
+
+# --- On-screen Options submenu (retargeted to the EXACT visible hashes; all duplicates) ---
+# MULTIPLAYER -> WIELU GRACZY
+0x7FD941D7 = WIELU GRACZY
+0xCFBD9A46 = WIELU GRACZY
+# GAME -> GRA
+0x4DBC49FB = GRA
+0x729A7298 = GRA
+# VIDEO -> OBRAZ
+0xBFA58A1C = OBRAZ
+0xE186A1A6 = OBRAZ
+# AUDIO -> DZWIEK
+0x0356FCA0 = DZWIEK
+0x785E24A5 = DZWIEK
+# MANAGE SAVES -> ZAPISY
+0xBDFD9F67 = ZAPISY
+# CONTROLS -> STEROWANIE
+0x07E8328E = STEROWANIE
+0x8FF20302 = STEROWANIE
+0xC33C0C8F = STEROWANIE
+# BACK -> WSTECZ
+0x7D49CF6A = WSTECZ
+0xCCDEA2FD = WSTECZ
+0xEFA80276 = WSTECZ
+# OPTIONS (left rotated menu) -> OPCJE
+0xD0AB9E75 = OPCJE
+# help line -> Polish
+0xAF422F10 = Zmien ustawienia serwera gry wieloosobowej.
+0xED7ADDAF = Zmien ustawienia serwera gry wieloosobowej.
+
+# --- Dynamic help bar (unambiguously stringdb; updates per cursor) + real Title-case labels ---
+0xB3F7F87A = Zmien ustawienia obrazu.
+0xBF50484D = Zmien ustawienia dzwieku.
+0xB02FD88B = Zmien sterowanie i inne ustawienia rozgrywki.
+0x0E54A188 = Ustawienia zaawansowanych opcji obrazu
+0x3C5B1497 = Ustawienia dzojstika
+0xB536A76F = Ustawienia sterowania
+0xC5137692 = Ustawienia klawiatury/myszy
+0xDD068948 = WIELU GRACZY
+0xFA79130D = Zarzadzaj zapisami
+0x46F1BB15 = KONTYNUUJ
+0x67F227BF = KONTYNUUJ
+0xBA75C86A = KONTYNUUJ
+0x2938E158 = WSTECZ
+0x841728C7 = WSTECZ
+0xB5293566 = WSTECZ
+0xD1AA11D3 = WSTECZ
+0xEC81281E = WSTECZ

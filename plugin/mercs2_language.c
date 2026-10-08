@@ -25,17 +25,32 @@
 #define VA_NAME_TABLE      0x00CF281Cu  /* char*[9] language names, indexed by the index      */
 #define VA_MOUNT_LANG_WAD  0x004BFE20u  /* opens .\Data\<name>.wad — the detour target        */
 
+/* The engine's language-stringdb lifecycle manager. `__cdecl f(mode, flag)`, self-contained
+ * (loads the request-queue @0x01175CDC, resolver table @0x01176630, and language index @0x01176018
+ * from globals — the caller passes only mode/flag). mode 0 = enqueue-ACQUIRE the current language's
+ * stringdb (hashes name-table[index] and pushes a RequestAsset onto the streaming queue); mode 1 =
+ * activate the already-resident copy. A novel language's stringdb ships only in a *patch* WAD, so
+ * the engine's own boot-time acquire can fire before that patch is in _Library[] and miss; re-acquiring
+ * HERE — at the language-WAD mount, by which point shell-patch/vz-patch are mounted — lets the queued
+ * RequestAsset find the novel row (reverse _Library[] search) and stream it resident. This is why the
+ * novel stringdb showed as raw [0x..] hashes: never resident, not misplaced. See
+ * notes-on-the-released-game/memory/novel-language-stringdb-residency.md. */
+#define VA_LANG_STRINGDB_ACQUIRE 0x004B87A0u
+typedef void (__cdecl *lang_stringdb_fn)(int mode, int flag);
+
 /* --- Config (from mercs2_language.ini) --- */
 static int  g_enabled = 0;
 static int  g_dry_run = 1;              /* default safe: log, don't apply */
 static int  g_index   = 7;             /* default: the unused 'allcaps' slot */
 static char g_name[64] = {0};          /* if set: repoint slot[index] -> this (static lifetime) */
+static int  g_acquire = 1;             /* re-acquire the language stringdb at mount (residency fix) */
 
 static void on_kv(void *ud, const char *key, const char *value) {
     (void)ud;
     if      (!_stricmp(key, "enabled")) g_enabled = m2_ini_bool(value);
     else if (!_stricmp(key, "dry_run")) g_dry_run = m2_ini_bool(value);
     else if (!_stricmp(key, "index"))   g_index   = m2_ini_int(value, g_index);
+    else if (!_stricmp(key, "acquire")) g_acquire = m2_ini_bool(value);
     else if (!_stricmp(key, "name")) {
         strncpy(g_name, value, sizeof(g_name) - 1);
         g_name[sizeof(g_name) - 1] = '\0';
@@ -48,10 +63,14 @@ static void on_kv(void *ud, const char *key, const char *value) {
 void mercs2_language_apply(void) {
     int **pp = (int **)VA_LANG_INDEX_PTR;
     if (g_dry_run) {
-        m2_logf("dry_run: mount reached; would force *0x%08X -> %d", VA_LANG_INDEX_PTR, g_index);
+        m2_logf("dry_run: mount reached; would force *0x%08X -> %d%s", VA_LANG_INDEX_PTR, g_index,
+                g_acquire ? " + re-acquire stringdb" : "");
         return;
     }
     if (*pp) (*pp)[0] = g_index;
+    /* Index is now our slot; re-enqueue the acquire so the queued RequestAsset finds the novel
+     * language's stringdb (now that shell-patch/vz-patch are mounted) and streams it resident. */
+    if (g_acquire) ((lang_stringdb_fn)VA_LANG_STRINGDB_ACQUIRE)(0, 1);
 }
 
 /* Defined in hook_stub.S; the MinHook trampoline it tail-jumps to. */
@@ -104,7 +123,8 @@ BOOL WINAPI DllMain(HINSTANCE h, DWORD reason, LPVOID reserved) {
 
     m2_hook_init();
     if (m2_hook_attach((void *)VA_MOUNT_LANG_WAD, (void *)det_mount, (void **)&g_orig_mount))
-        m2_logf("hook armed @0x%08X (index=%d, dry_run=%d)", VA_MOUNT_LANG_WAD, g_index, g_dry_run);
+        m2_logf("hook armed @0x%08X (index=%d, dry_run=%d, acquire=%d)",
+                VA_MOUNT_LANG_WAD, g_index, g_dry_run, g_acquire);
     else
         m2_logf("FAILED to attach hook @0x%08X", VA_MOUNT_LANG_WAD);
 
