@@ -36,13 +36,18 @@ index force to a detour that fires at mount time. Full reverse-engineering and r
 ```
 mercs2_language/
   manifest.yaml            the Shipment
+  .github/
+    qm-version             the qm release the workflows use
+    m2-sdk-version         the m2-sdk release the plugin links against (= the sdk/ gitlink)
+    actions/build-asi/     builds and checks src/mercs2_language.asi
+    workflows/             lint (every push/PR) and release
   sdk/                     m2 SDK (git submodule)
   plugin/
     mercs2_language.c      DllMain, config, slot repoint, hook install
     hook_stub.S            register-preserving detour (the mount fn reads ESI implicitly)
     Makefile               include ../sdk/sdk.mk
   src/
-    mercs2_language.asi    built plugin (shipment input)
+    mercs2_language.asi    built plugin, never committed (gitignored; built from plugin/)
     mercs2_language.ini    config (place_file)
     polski.strings         translation (add_language)
 ```
@@ -59,6 +64,25 @@ qm build . --out build                      # needs the retail WADs
 `make -C plugin` needs the `i686-w64-mingw32-gcc` cross-compiler. When `sdk/build/libm2-sdk.dll.a`
 is absent it first runs `make -C sdk build`, which at m2 SDK v0.4.0 builds `m2-sdk.dll` from the
 `mercs2_mod_runtime` crate and also needs `rustup`, `curl` and `shasum` (see `sdk/README.md`).
+To link against a released import library instead, download `libm2-sdk.dll.a` from the m2-sdk
+release in `.github/m2-sdk-version` and point the build at it:
+
+```sh
+make -C plugin M2_IMPLIB=<dir>/libm2-sdk.dll.a M2_LDFLAGS="-L<dir> -lm2-sdk"
+```
+
+`qm lint` needs `src/mercs2_language.asi` to exist (a declared source that does not exist is
+**M0110**), so build the plugin first.
+
+## Releases
+
+`src/mercs2_language.asi` is never committed. `.github/workflows/lint.yml` builds it on every push
+and pull request (`.github/actions/build-asi`: the `make` line above against the digest-checked
+m2-sdk release import library, then a check that every `m2-sdk.dll` import is exported by that
+release's DLL) and runs `qm lint .`. `.github/workflows/release.yml` does the same on a `v*` tag push
+or a workflow dispatch (which stamps `shipment.version`), and attaches `mercs2_language.asi` and
+`<shipment.name>-v<version>.zip` (`manifest.yaml`, `src/`, `README.md`) to the release. Both use the
+qm release in `.github/qm-version`, checked against GitHub's recorded digest.
 
 ## Selecting the language
 
