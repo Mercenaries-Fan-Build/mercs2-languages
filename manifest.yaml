@@ -13,7 +13,7 @@
 #
 # RE + hook contract: notes-on-the-released-game/docs/reverse_engineer/language_asi_hook_contract.md
 
-format: 1
+format: 2
 
 shipment:
   name: mercs2-language
@@ -38,7 +38,7 @@ contributions:
     file: src/mercs2_language.ini
     dest: scripts
 
-  # 3 — the novel language's base WAD. REQUIRES the new `add_language` kind (see NOTE).
+  # 3 — the novel language's base WAD, placed in data/ by the `add_language` kind (see WHY above).
   #     `name` is the slot string the plugin selects and the basename the game opens
   #     (`.\Data\polski.wad`). The workshop's Localization page authors `strings`.
   - kind: add_language
@@ -47,12 +47,12 @@ contributions:
     strings: src/polski.strings
     # fonts: src/polski_fonts/   # only if glyphs fall outside fonts_enext (Cyrillic/CJK)
 
-# The shared SDK layer is a load-time dependency, resolved by SEMVER RANGE — not a byte-exact pin.
-# Modkit installs the highest m2-sdk release satisfying this range (currently v0.1.0), ONE copy
-# shared across every mod that needs it, so the SDK can patch on its own cadence without this
-# shipment being re-released. It lands in the GAME ROOT (not scripts/) because pmc_bb loads .asi
-# plugins with a plain LoadLibraryA, which resolves a plugin's own imports from the exe directory.
+# The shared SDK layer (m2-sdk.dll, a load-time import of the plugin) is required as the m2-sdk
+# Shipment, by SEMVER RANGE — not a byte-exact pin. `^0.4` is `>=0.4.0, <0.5.0`; `qm preflight` and
+# `qm link` refuse an installed m2-sdk outside it (M0204). The m2-sdk Shipment's `add_runtime_dll`
+# places ONE m2-sdk.dll, shared by every mod that needs it, in the GAME ROOT (not scripts/), because
+# pmc_bb loads .asi plugins with a plain LoadLibraryA, which resolves a plugin's own imports from
+# the exe directory.
 load:
   requires:
-    - name: m2-sdk
-      version: "^0.1"
+    - { shipment: m2-sdk, version: "^0.4" }
