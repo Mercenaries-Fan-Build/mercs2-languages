@@ -1,0 +1,131 @@
+name: Build the plugin ASI
+description: >-
+  Builds src/mercs2_language.asi from plugin/ with the i686 MinGW toolchain, against the m2 SDK headers
+  in the sdk/ submodule and the import library of the m2-sdk release named in .github/m2-sdk-version,
+  and checks that every m2-sdk.dll import it makes is exported by that release's DLL.
+
+runs:
+  using: composite
+  steps:
+    - name: Install the i686 MinGW toolchain
+      shell: bash
+      run: |
+        set -euo pipefail
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends gcc-mingw-w64-i686 binutils-mingw-w64-i686
+
+    # The headers come from the sdk/ submodule and the import library from an m2-sdk release, so both
+    # must be the same SDK: the gitlink must be the commit the release tag names.
+    - name: The sdk/ submodule is the m2-sdk release in .github/m2-sdk-version
+      id: sdk
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        M2_SDK_VERSION="$(tr -d '[:space:]' < .github/m2-sdk-version)"
+        case "$M2_SDK_VERSION" in
+          v[0-9]*.[0-9]*.[0-9]*) ;;
+          *) echo "::error::.github/m2-sdk-version holds '$M2_SDK_VERSION', not a vX.Y.Z m2-sdk release tag"; exit 1 ;;
+        esac
+        repo=Mercenaries-Fan-Build/mercs2-sdk
+        want=$(gh api "repos/$repo/commits/$M2_SDK_VERSION" --jq .sha) \
+          || { echo "::error::m2-sdk tag $M2_SDK_VERSION was not found in $repo -- check .github/m2-sdk-version"; exit 1; }
+        link=$(git rev-parse HEAD:sdk)
+        if [ "$link" != "$want" ]; then
+          echo "::error::the sdk gitlink is $link but m2-sdk $M2_SDK_VERSION is $want. Move the submodule to $M2_SDK_VERSION or change .github/m2-sdk-version."
+          exit 1
+        fi
+        have=$(git -C sdk rev-parse HEAD) \
+          || { echo "::error::sdk/ is not checked out -- the checkout step needs submodules: true"; exit 1; }
+        if [ "$have" != "$want" ]; then
+          echo "::error::sdk/ is checked out at $have, not the gitlink $want"
+          exit 1
+        fi
+        test -f sdk/sdk.mk || { echo "::error::sdk/sdk.mk is missing from the sdk/ checkout"; exit 1; }
+        echo "sdk/ is m2-sdk $M2_SDK_VERSION ($want)"
+        echo "version=$M2_SDK_VERSION" >> "$GITHUB_OUTPUT"
+
+    # GitHub records a sha256 for every release asset. Each is read BEFORE downloading, so the check is
+    # against what the release claims to hold rather than against the bytes that arrived.
+    - name: Download the m2-sdk import library and DLL, verified by digest
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        M2_SDK_VERSION: ${{ steps.sdk.outputs.version }}
+      run: |
+        set -euo pipefail
+        repo=Mercenaries-Fan-Build/mercs2-sdk
+        dir="$RUNNER_TEMP/m2-sdk"
+        rm -rf "$dir"
+        mkdir -p "$dir"
+        for asset in libm2-sdk.dll.a m2-sdk.dll; do
+          want=$(gh api "repos/$repo/releases/tags/$M2_SDK_VERSION" \
+            --jq ".assets[] | select(.name == \"$asset\") | .digest") \
+            || { echo "::error::m2-sdk release $M2_SDK_VERSION was not found in $repo"; exit 1; }
+          if [ -z "$want" ]; then
+            echo "::error::$asset is not in m2-sdk $M2_SDK_VERSION"
+            exit 1
+          fi
+          want=${want#sha256:}
+          gh release download "$M2_SDK_VERSION" --repo "$repo" --pattern "$asset" --output "$dir/$asset"
+          got=$(sha256sum "$dir/$asset" | cut -d' ' -f1)
+          if [ "$want" != "$got" ]; then
+            echo "::error::$asset failed verification -- expected $want, got $got"
+            exit 1
+          fi
+          echo "m2-sdk $M2_SDK_VERSION $asset verified: $got"
+        done
+
+    # plugin/Makefile writes ../src/mercs2_language.asi, the file manifest.yaml declares. M2_IMPLIB and
+    # M2_LDFLAGS point the link at the release import library, so the SDK DLL is not rebuilt here.
+    - name: Build src/mercs2_language.asi
+      shell: bash
+      run: |
+        set -euo pipefail
+        dir="$RUNNER_TEMP/m2-sdk"
+        rm -f src/mercs2_language.asi
+        make -C plugin M2_IMPLIB="$dir/libm2-sdk.dll.a" M2_LDFLAGS="-L$dir -lm2-sdk"
+        if [ ! -f src/mercs2_language.asi ]; then
+          echo "::error::the plugin build did not write src/mercs2_language.asi"
+          exit 1
+        fi
+        echo "built src/mercs2_language.asi ($(wc -c < src/mercs2_language.asi) bytes, sha256 $(sha256sum src/mercs2_language.asi | cut -d' ' -f1))"
+
+    # A plugin that compiles can still fail to load on a player's machine: only the import table shows
+    # that it binds to m2-sdk.dll, and only the release DLL's export table shows that every name exists.
+    - name: It is a 32-bit PE DLL whose m2-sdk.dll imports the release exports
+      shell: bash
+      run: |
+        set -euo pipefail
+        dir="$RUNNER_TEMP/m2-sdk"
+        asi="$(i686-w64-mingw32-objdump -p src/mercs2_language.asi)"
+        dll="$(i686-w64-mingw32-objdump -p "$dir/m2-sdk.dll")"
+        # objdump's PE header, not file(1), whose wording for a PE differs between libmagic versions.
+        grep -q 'file format pei-i386$' <<< "$asi" \
+          || { echo "::error::src/mercs2_language.asi is not an i386 PE image"; exit 1; }
+        grep -q '^Magic[[:space:]]*010b[[:space:]]*(PE32)$' <<< "$asi" \
+          || { echo "::error::src/mercs2_language.asi is not PE32"; exit 1; }
+        grep -qx '[[:space:]]*DLL' <<< "$asi" \
+          || { echo "::error::src/mercs2_language.asi does not carry the DLL characteristic"; exit 1; }
+        imports="$(awk '/DLL Name: m2-sdk.dll/ {f=1; next} /DLL Name:/ {f=0} f && $NF ~ /^m2_/ {print $NF}' <<< "$asi")"
+        exports="$(awk '/\[Ordinal\/Name Pointer\] Table/ {f=1; next} f && NF == 0 {f=0} f && $NF ~ /^m2_/ {print $NF}' <<< "$dll")"
+        if [ -z "$imports" ]; then
+          echo "::error::src/mercs2_language.asi imports nothing from m2-sdk.dll"
+          exit 1
+        fi
+        if [ -z "$exports" ]; then
+          echo "::error::no m2_ exports were read from the m2-sdk release DLL"
+          exit 1
+        fi
+        missing=0
+        for sym in $imports; do
+          if grep -qx "$sym" <<< "$exports"; then
+            echo "  $sym"
+          else
+            echo "::error::src/mercs2_language.asi imports $sym, which the m2-sdk release DLL does not export"
+            missing=1
+          fi
+        done
+        [ "$missing" = 0 ] || exit 1
+        echo "every m2-sdk.dll import is exported by the release DLL"
