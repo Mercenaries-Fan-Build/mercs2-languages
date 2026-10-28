@@ -26,7 +26,8 @@ shipment:
 contributions:
   # 1 — the selector plugin. At the language-WAD mount (FUN_004bfe20) it forces
   #     *DAT_01176018 to the configured slot, so the game boots into our language
-  #     independent of OS-locale. Built against the m2 SDK (see plugin/).
+  #     independent of OS-locale. Built against the m2 SDK from plugin/; never committed — the
+  #     lint and release workflows build and stage it (.github/actions/build-asi).
   - kind: native_hook
     target: retail
     plugin: src/mercs2_language.asi
