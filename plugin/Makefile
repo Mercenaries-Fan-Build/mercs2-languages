@@ -1,7 +1,12 @@
 # Builds mercs2_language.asi against the m2 SDK (the shared m2-sdk.dll layer).
 #
 #   make            ->  ../src/mercs2_language.asi   (builds the SDK first if needed)
+#   make M2_IMPLIB=<dir>/libm2-sdk.dll.a M2_LDFLAGS="-L<dir> -lm2-sdk"
+#                   ->  the same, linked against a released m2-sdk import library (what
+#                       ../.github/actions/build-asi runs)
 #   make clean
+#
+# The output is never committed (.gitignore: *.asi); the lint and release workflows build it.
 #
 # Requires: the i686-w64-mingw32 toolchain, and the sdk/ submodule initialized
 # (git submodule update --init --recursive). Building the SDK's import library
