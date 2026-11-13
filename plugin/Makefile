@@ -13,7 +13,7 @@
 # (`make -C ../sdk build`) also needs rustup, curl and shasum (see sdk/README.md).
 #
 # m2-sdk.dll is a LOAD-TIME dependency, placed in the game root by the m2-sdk Shipment. The
-# Shipment requires it via `load.requires` (`{ shipment: m2-sdk, version: "^0.4" }`).
+# Shipment requires it via `load.requires` (`{ shipment: m2-sdk, version: ">=0.6.0" }`).
 
 include ../sdk/sdk.mk
 
