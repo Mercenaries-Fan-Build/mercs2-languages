@@ -17,7 +17,7 @@ format: 2
 
 shipment:
   name: mercs2-language
-  version: 0.1.0
+  version: 0.2.0
   target: retail
   authors: [mercs2-fan-build]
   description: Adds a novel, player-selectable language via a native language-selector plugin and a new language WAD.
