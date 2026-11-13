@@ -26,7 +26,7 @@ index force to a detour that fires at mount time. Full reverse-engineering and r
 - **`add_language`** is the one kind that places a WAD in `data/`: a novel language needs a new
   base `.\Data\<name>.wad` (a missing one is a hard `exit(1)`).
 - The plugin imports `m2-sdk.dll`, so the Shipment requires the **m2-sdk** Shipment
-  (`load.requires: { shipment: m2-sdk, version: "^0.4" }`, i.e. `>=0.4.0, <0.5.0`), which places
+  (`load.requires: { shipment: m2-sdk, version: ">=0.6.0" }`, 0.6.0 or newer), which places
   `m2-sdk.dll` in the game root.
 - The plugin ships **`enabled = false`, `dry_run = true`** — inert until configured and until the
   live verification spike confirms the hook fires at the mount frame.
