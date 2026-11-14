@@ -22,7 +22,7 @@ index force to a detour that fires at mount time. Full reverse-engineering and r
 
 ## ⚠ Requirements and defaults
 
-- `manifest.yaml` is manifest **format 2**, read by `qm` 4.0.0 (Quartermaster release `v0.17.0`).
+- `manifest.yaml` is manifest **format 2**, read by `qm` 6.0.0 (Workshop Tools release `v1.19.0`).
 - **`add_language`** is the one kind that places a WAD in `data/`: a novel language needs a new
   base `.\Data\<name>.wad` (a missing one is a hard `exit(1)`).
 - The plugin imports `m2-sdk.dll`, so the Shipment requires the **m2-sdk** Shipment
@@ -62,7 +62,7 @@ qm build . --out build                      # needs the retail WADs
 ```
 
 `make -C plugin` needs the `i686-w64-mingw32-gcc` cross-compiler. When `sdk/build/libm2-sdk.dll.a`
-is absent it first runs `make -C sdk build`, which at m2 SDK v0.4.0 builds `m2-sdk.dll` from the
+is absent it first runs `make -C sdk build`, which at m2 SDK v0.6.0 builds `m2-sdk.dll` from the
 `mercs2_mod_runtime` crate and also needs `rustup`, `curl` and `shasum` (see `sdk/README.md`).
 To link against a released import library instead, download `libm2-sdk.dll.a` from the m2-sdk
 release in `.github/m2-sdk-version` and point the build at it:
